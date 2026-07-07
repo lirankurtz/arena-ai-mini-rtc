@@ -5,7 +5,11 @@ import { Lobby } from "../components/Lobby";
 
 export default function Room() {
   const { id: roomId } = useParams<{ id: string }>();
-  const { stream, error: mediaError, loading: mediaLoading } = useLocalMedia();
+  const [videoEnabled, setVideoEnabled] = useState(false);
+  const { stream, error: mediaError, loading: mediaLoading } = useLocalMedia({
+    audio: true,
+    video: videoEnabled,
+  });
   const [joined, setJoined] = useState(false);
 
   if (!roomId) {
@@ -23,6 +27,8 @@ export default function Room() {
         stream={stream}
         loading={mediaLoading}
         error={mediaError && formatMediaError(mediaError)}
+        videoEnabled={videoEnabled}
+        onVideoToggle={setVideoEnabled}
         onJoin={() => {
           setJoined(true);
         }}

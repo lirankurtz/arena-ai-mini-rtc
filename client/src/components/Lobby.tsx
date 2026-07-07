@@ -8,6 +8,8 @@ interface LobbyProps {
   onJoin: () => void;
   joinDisabled?: boolean;
   error?: string | null;
+  videoEnabled?: boolean;
+  onVideoToggle?: (enabled: boolean) => void;
 }
 
 export function Lobby({
@@ -17,6 +19,8 @@ export function Lobby({
   onJoin,
   joinDisabled = false,
   error,
+  videoEnabled = false,
+  onVideoToggle,
 }: LobbyProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [probeLoading, setProbeLoading] = useState(true);
@@ -24,10 +28,10 @@ export function Lobby({
   const [probeError, setProbeError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (videoRef.current && stream && stream instanceof MediaStream) {
+    if (videoRef.current && stream && stream instanceof MediaStream && videoEnabled) {
       videoRef.current.srcObject = stream;
     }
-  }, [stream]);
+  }, [stream, videoEnabled]);
 
   useEffect(() => {
     let mounted = true;
@@ -97,7 +101,41 @@ export function Lobby({
       )}
 
       {stream && (
-        <AudioIndicator stream={stream} />
+        <div className="flex flex-col gap-4 items-center">
+          <div className="bg-slate-800 rounded-lg overflow-hidden shadow-lg w-80 h-60 relative group">
+            {videoEnabled ? (
+              <>
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover bg-black"
+                />
+                <button
+                  onClick={() => onVideoToggle?.(false)}
+                  className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 p-2 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                  title="Disable camera"
+                >
+                  🎥
+                </button>
+              </>
+            ) : (
+              <div className="w-full h-full bg-slate-700 flex flex-col items-center justify-center gap-3">
+                <div className="text-4xl opacity-50">📷</div>
+                <div className="text-sm text-slate-400">Camera disabled</div>
+                <button
+                  onClick={() => onVideoToggle?.(true)}
+                  className="bg-emerald-600 hover:bg-emerald-700 px-3 py-1 rounded text-xs text-white transition-colors"
+                >
+                  Enable
+                </button>
+              </div>
+            )}
+          </div>
+
+          <AudioIndicator stream={stream} />
+        </div>
       )}
 
       {!stream && !loading && (

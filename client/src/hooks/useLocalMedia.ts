@@ -8,7 +8,13 @@ interface UseLocalMediaResult {
   loading: boolean;
 }
 
-export function useLocalMedia(): UseLocalMediaResult {
+interface UseLocalMediaOptions {
+  audio?: boolean;
+  video?: boolean;
+}
+
+export function useLocalMedia(options: UseLocalMediaOptions = {}): UseLocalMediaResult {
+  const { audio = true, video = false } = options;
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<LocalMediaError | null>(null);
   const [loading, setLoading] = useState(true);
@@ -20,8 +26,8 @@ export function useLocalMedia(): UseLocalMediaResult {
     const getMedia = async () => {
       try {
         mediaStream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: false,
+          audio,
+          video,
         });
 
         if (mounted) {
@@ -62,7 +68,7 @@ export function useLocalMedia(): UseLocalMediaResult {
         });
       }
     };
-  }, []);
+  }, [audio, video]);
 
   return { stream, error, loading };
 }
