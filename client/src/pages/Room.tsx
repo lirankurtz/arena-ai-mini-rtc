@@ -5,6 +5,7 @@ import { useSignaling } from "../hooks/useSignaling";
 import { usePeerConnection } from "../hooks/usePeerConnection";
 import { Lobby } from "../components/Lobby";
 import { InCall } from "../components/InCall";
+import { ErrorBanner } from "../components/ErrorBanner";
 
 export default function Room() {
   const { id: roomId } = useParams<{ id: string }>();
@@ -16,7 +17,32 @@ export default function Room() {
   const [joined, setJoined] = useState(false);
   const [remotePeer, setRemotePeer] = useState<string | null>(null);
 
-  const { connected, peers, offer, answer, iceCandidate, sendJoin, sendOffer, sendAnswer, sendIceCandidate, clearOffer, clearAnswer, clearIceCandidate } = useSignaling();
+  const { connected, error: signalingError, peers, offer, answer, iceCandidate, sendJoin, sendOffer, sendAnswer, sendIceCandidate, clearOffer, clearAnswer, clearIceCandidate } = useSignaling();
+  const [dismissedErrors, setDismissedErrors] = useState<Set<string>>(new Set());
+
+  const getDisplayedError = () => {
+    if (mediaError && !dismissedErrors.has("media")) {
+      return { type: "media" as const, message: formatMediaError(mediaError)! };
+    }
+    if (signalingError && !dismissedErrors.has("signaling")) {
+      const messages: Record<string, string> = {
+        "room-full": "Room is full. Unable to join.",
+        "invalid-room": "Invalid room ID.",
+        "connection-failed": "WebSocket connection failed.",
+        "already-joined": "Already joined this room.",
+      };
+      return { type: "signaling" as const, message: messages[signalingError] || signalingError };
+    }
+    return null;
+  };
+
+  const displayedError = getDisplayedError();
+
+  const handleDismissError = () => {
+    if (displayedError) {
+      setDismissedErrors((prev) => new Set([...prev, displayedError.type]));
+    }
+  };
 
   const { pc, connectionState, remoteStream, createOffer, createAnswer, setRemoteDescription, addIceCandidate } = usePeerConnection(stream, {
     onIceCandidate: (candidate) => {
@@ -87,17 +113,27 @@ export default function Room() {
 
   if (!joined) {
     return (
-      <Lobby
-        roomId={roomId}
-        stream={stream}
-        loading={mediaLoading}
-        error={mediaError && formatMediaError(mediaError)}
-        videoEnabled={videoEnabled}
-        onVideoToggle={setVideoEnabled}
-        onJoin={() => {
-          setJoined(true);
-        }}
-      />
+      <div className="min-h-screen flex flex-col">
+        {displayedError && (
+          <div className="p-4 bg-slate-900">
+            <ErrorBanner
+              message={displayedError.message}
+              onDismiss={handleDismissError}
+            />
+          </div>
+        )}
+        <Lobby
+          roomId={roomId}
+          stream={stream}
+          loading={mediaLoading}
+          error={null}
+          videoEnabled={videoEnabled}
+          onVideoToggle={setVideoEnabled}
+          onJoin={() => {
+            setJoined(true);
+          }}
+        />
+      </div>
     );
   }
 
@@ -119,6 +155,8 @@ export default function Room() {
       localStream={stream}
       remoteStream={remoteStream}
       connectionState={connectionState}
+      error={displayedError?.message}
+      onDismissError={handleDismissError}
       audioEnabled={true}
       videoEnabled={videoEnabled}
       onAudioToggle={handleAudioToggle}

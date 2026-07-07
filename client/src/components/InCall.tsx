@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import { ErrorBanner } from "./ErrorBanner";
 
 interface InCallProps {
   roomId: string;
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
   connectionState?: RTCPeerConnectionState;
+  error?: string | null;
+  onDismissError?: () => void;
   audioEnabled?: boolean;
   videoEnabled?: boolean;
   onAudioToggle?: (enabled: boolean) => void;
@@ -16,6 +19,8 @@ export function InCall({
   localStream,
   remoteStream,
   connectionState = "new",
+  error,
+  onDismissError,
   audioEnabled = true,
   videoEnabled = false,
   onAudioToggle,
@@ -97,6 +102,14 @@ export function InCall({
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-900 text-slate-100">
+      {error && (
+        <div className="p-4 bg-slate-900 border-b border-slate-700">
+          <ErrorBanner
+            message={error}
+            onDismiss={onDismissError}
+          />
+        </div>
+      )}
       <div className="p-4 border-b border-slate-700 flex justify-between items-center">
         <h1 className="text-3xl font-bold">Room: {roomId}</h1>
         <div className={`${getStatusColor()} text-white px-3 py-1 rounded-full text-sm font-semibold`}>
