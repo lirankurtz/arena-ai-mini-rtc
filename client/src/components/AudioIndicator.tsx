@@ -70,15 +70,12 @@ export function AudioIndicator({ stream }: AudioIndicatorProps) {
     .join("");
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="flex items-center gap-3">
-        <span className="text-2xl">🎙️</span>
-        <div className="text-xl font-mono tracking-wider">
-          <span className="text-emerald-500">{dashes.substring(0, level * 2)}</span>
-          <span className="text-slate-500">{dashes.substring(level * 2)}</span>
-        </div>
+    <div className="flex items-center gap-3">
+      <span className="text-2xl">🎙️</span>
+      <div className="text-xl font-mono tracking-wider">
+        <span className="text-emerald-500">{dashes.substring(0, level * 2)}</span>
+        <span className="text-slate-500">{dashes.substring(level * 2)}</span>
       </div>
-      <p className="text-sm text-slate-400">Microphone active</p>
     </div>
   );
 }

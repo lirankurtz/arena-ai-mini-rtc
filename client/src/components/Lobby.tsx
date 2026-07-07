@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { AudioIndicator } from "./AudioIndicator";
 
 interface LobbyProps {
   roomId: string;
@@ -96,18 +97,7 @@ export function Lobby({
       )}
 
       {stream && (
-        <div className="bg-slate-800 rounded-lg overflow-hidden shadow-lg">
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            className="w-80 h-60 object-cover bg-black"
-          />
-          <div className="bg-slate-700 px-4 py-2 text-center text-sm text-slate-300">
-            Local preview
-          </div>
-        </div>
+        <AudioIndicator stream={stream} />
       )}
 
       {!stream && !loading && (
