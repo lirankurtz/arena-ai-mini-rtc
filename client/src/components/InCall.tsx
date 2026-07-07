@@ -4,6 +4,7 @@ interface InCallProps {
   roomId: string;
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
+  connectionState?: RTCPeerConnectionState;
   audioEnabled?: boolean;
   videoEnabled?: boolean;
   onAudioToggle?: (enabled: boolean) => void;
@@ -14,6 +15,7 @@ export function InCall({
   roomId,
   localStream,
   remoteStream,
+  connectionState = "new",
   audioEnabled = true,
   videoEnabled = false,
   onAudioToggle,
@@ -64,10 +66,42 @@ export function InCall({
     onVideoToggle?.(newState);
   };
 
+  const getStatusColor = () => {
+    switch (connectionState) {
+      case "connected":
+        return "bg-emerald-600";
+      case "connecting":
+        return "bg-yellow-600";
+      case "disconnected":
+      case "failed":
+        return "bg-red-600";
+      default:
+        return "bg-slate-600";
+    }
+  };
+
+  const getStatusText = () => {
+    switch (connectionState) {
+      case "connected":
+        return "Connected";
+      case "connecting":
+        return "Connecting...";
+      case "disconnected":
+        return "Disconnected";
+      case "failed":
+        return "Connection failed";
+      default:
+        return "Initializing";
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-900 text-slate-100">
-      <div className="p-4 border-b border-slate-700">
+      <div className="p-4 border-b border-slate-700 flex justify-between items-center">
         <h1 className="text-3xl font-bold">Room: {roomId}</h1>
+        <div className={`${getStatusColor()} text-white px-3 py-1 rounded-full text-sm font-semibold`}>
+          {getStatusText()}
+        </div>
       </div>
 
       <div className="flex-1 flex gap-4 p-4">

@@ -18,7 +18,7 @@ export default function Room() {
 
   const { connected, peers, offer, answer, iceCandidate, sendJoin, sendOffer, sendAnswer, sendIceCandidate, clearOffer, clearAnswer, clearIceCandidate } = useSignaling();
 
-  const { pc, remoteStream, createOffer, createAnswer, setRemoteDescription, addIceCandidate } = usePeerConnection(stream, {
+  const { pc, connectionState, remoteStream, createOffer, createAnswer, setRemoteDescription, addIceCandidate } = usePeerConnection(stream, {
     onIceCandidate: (candidate) => {
       sendIceCandidate(candidate);
     },
@@ -118,6 +118,7 @@ export default function Room() {
       roomId={roomId}
       localStream={stream}
       remoteStream={remoteStream}
+      connectionState={connectionState}
       audioEnabled={true}
       videoEnabled={videoEnabled}
       onAudioToggle={handleAudioToggle}
