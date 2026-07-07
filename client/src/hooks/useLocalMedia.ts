@@ -15,10 +15,11 @@ export function useLocalMedia(): UseLocalMediaResult {
 
   useEffect(() => {
     let mounted = true;
+    let mediaStream: MediaStream | null = null;
 
     const getMedia = async () => {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
+        mediaStream = await navigator.mediaDevices.getUserMedia({
           audio: true,
           video: false,
         });
@@ -55,8 +56,8 @@ export function useLocalMedia(): UseLocalMediaResult {
 
     return () => {
       mounted = false;
-      if (stream) {
-        stream.getTracks().forEach((track) => {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach((track) => {
           track.stop();
         });
       }
