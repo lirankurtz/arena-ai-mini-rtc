@@ -1,21 +1,14 @@
-import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import Room from "./pages/Room";
 
 export default function App() {
-  const [message, setMessage] = useState("loading...");
-
-  useEffect(() => {
-    fetch("/api/health")
-      .then((res) => res.json())
-      .then((data) => setMessage(data.status))
-      .catch(() => setMessage("backend unreachable"));
-  }, []);
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-900 text-slate-100">
-      <h1 className="text-3xl font-bold">arena-ai-mini-rtc</h1>
-      <p className="text-slate-400">
-        backend says: <span className="font-mono text-emerald-400">{message}</span>
-      </p>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/room/:id" element={<Room />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
