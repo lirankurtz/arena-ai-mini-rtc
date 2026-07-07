@@ -12,6 +12,7 @@ interface InCallProps {
   videoEnabled?: boolean;
   onAudioToggle?: (enabled: boolean) => void;
   onVideoToggle?: (enabled: boolean) => void;
+  onLeave?: () => void;
 }
 
 export function InCall({
@@ -25,6 +26,7 @@ export function InCall({
   videoEnabled = false,
   onAudioToggle,
   onVideoToggle,
+  onLeave,
 }: InCallProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -177,6 +179,13 @@ export function InCall({
           }`}
         >
           {localVideoEnabled ? "📹 Stop video" : "📹 Start video"}
+        </button>
+
+        <button
+          onClick={onLeave}
+          className="px-6 py-2 rounded-lg font-semibold bg-slate-700 hover:bg-slate-600 text-white transition-colors"
+        >
+          📞 Leave call
         </button>
       </div>
     </div>

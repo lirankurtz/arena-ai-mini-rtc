@@ -149,6 +149,15 @@ export default function Room() {
     setVideoEnabled(enabled);
   };
 
+  const handleLeave = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => {
+        track.stop();
+      });
+    }
+    setJoined(false);
+  };
+
   return (
     <InCall
       roomId={roomId}
@@ -161,6 +170,7 @@ export default function Room() {
       videoEnabled={videoEnabled}
       onAudioToggle={handleAudioToggle}
       onVideoToggle={handleVideoToggle}
+      onLeave={handleLeave}
     />
   );
 }
