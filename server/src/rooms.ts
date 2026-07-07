@@ -38,7 +38,9 @@ export class RoomManager {
 
   leave(roomId: string, peerId: string): void {
     const room = this.rooms.get(roomId);
-    if (!room) return;
+    if (!room) {
+      return;
+    }
 
     room.delete(peerId);
     if (room.size === 0) {
@@ -56,7 +58,9 @@ export class RoomManager {
   }
 
   isRoomAvailable(roomId: string): boolean {
-    if (!this.validateRoomId(roomId)) return false;
+    if (!this.validateRoomId(roomId)) {
+      return false;
+    }
     const room = this.rooms.get(roomId);
     return !room || room.size < MAX_PEERS_PER_ROOM;
   }

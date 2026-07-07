@@ -21,10 +21,14 @@ function createSession(peerId: string, ws: WebSocket, roomManager: RoomManager):
   };
 
   const broadcastToRoom = (msg: ServerMessage, excludePeerId?: string) => {
-    if (!currentRoom) return;
+    if (!currentRoom) {
+      return;
+    }
     const peers = roomManager.peersOf(currentRoom);
     peers.forEach((pid) => {
-      if (excludePeerId && pid === excludePeerId) return;
+      if (excludePeerId && pid === excludePeerId) {
+        return;
+      }
       const peerWs = roomManager.getPeerSocket(currentRoom!, pid);
       if (peerWs && peerWs.readyState === peerWs.OPEN) {
         peerWs.send(JSON.stringify(msg));
@@ -59,7 +63,9 @@ function handleJoin(
 }
 
 function handleLeave(session: PeerSession, roomManager: RoomManager): void {
-  if (!session.currentRoom) return;
+  if (!session.currentRoom) {
+    return;
+  }
   roomManager.leave(session.currentRoom, session.peerId);
   session.broadcastToRoom({ type: "peer-left", peerId: session.peerId });
   session.currentRoom = null;
@@ -70,9 +76,13 @@ function relayToOtherPeer(
   session: PeerSession,
   roomManager: RoomManager
 ): void {
-  if (!session.currentRoom) return;
+  if (!session.currentRoom) {
+    return;
+  }
   const peers = roomManager.peersOf(session.currentRoom);
-  if (peers.length === 0) return;
+  if (peers.length === 0) {
+    return;
+  }
 
   const otherPeerId = peers[0];
   const otherWs = roomManager.getPeerSocket(session.currentRoom, otherPeerId);
