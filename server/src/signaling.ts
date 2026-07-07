@@ -80,11 +80,11 @@ function relayToOtherPeer(
     return;
   }
   const peers = roomManager.peersOf(session.currentRoom);
-  if (peers.length === 0) {
+  const otherPeerId = peers.find((id) => id !== session.peerId);
+  if (!otherPeerId) {
     return;
   }
 
-  const otherPeerId = peers[0];
   const otherWs = roomManager.getPeerSocket(session.currentRoom, otherPeerId);
   if (otherWs && otherWs.readyState === otherWs.OPEN) {
     otherWs.send(JSON.stringify(msg));

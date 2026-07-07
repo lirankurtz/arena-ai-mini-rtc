@@ -119,7 +119,11 @@ export function useSignaling(): UseSignalingResult {
     const connect = () => {
       try {
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const ws = new WebSocket(`${protocol}//${window.location.host}`);
+        let host = window.location.host;
+        if (host.includes("5173")) {
+          host = "localhost:3000";
+        }
+        const ws = new WebSocket(`${protocol}//${host}`);
 
         ws.onopen = () => {
           if (mounted) {

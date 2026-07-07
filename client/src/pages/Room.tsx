@@ -16,6 +16,7 @@ export default function Room() {
   });
   const [joined, setJoined] = useState(false);
   const [remotePeer, setRemotePeer] = useState<string | null>(null);
+  const [initialPeers, setInitialPeers] = useState<string[]>([]);
 
   const { connected, error: signalingError, peers, offer, answer, iceCandidate, sendJoin, sendOffer, sendAnswer, sendIceCandidate, clearOffer, clearAnswer, clearIceCandidate } = useSignaling();
   const [dismissedErrors, setDismissedErrors] = useState<Set<string>>(new Set());
@@ -57,7 +58,13 @@ export default function Room() {
   }, [joined, connected, roomId, stream, sendJoin]);
 
   useEffect(() => {
-    if (offer) {
+    if (joined && peers.length > 0 && initialPeers.length === 0) {
+      setInitialPeers(peers);
+    }
+  }, [joined, peers, initialPeers.length]);
+
+  useEffect(() => {
+    if (offer && pc) {
       setRemotePeer(offer.from);
       setRemoteDescription("offer", offer.sdp)
         .then(() => createAnswer())
@@ -69,7 +76,7 @@ export default function Room() {
           console.error("Failed to handle offer:", err);
         });
     }
-  }, [offer, setRemoteDescription, createAnswer, sendAnswer, clearOffer]);
+  }, [offer, pc, setRemoteDescription, createAnswer, sendAnswer, clearOffer]);
 
   useEffect(() => {
     if (answer) {
@@ -92,16 +99,19 @@ export default function Room() {
   }, [iceCandidate, addIceCandidate, clearIceCandidate]);
 
   useEffect(() => {
-    if (peers.length > 0 && pc && !remotePeer) {
+    if (joined && pc && initialPeers.length > 0 && !remotePeer) {
+      const peerId = initialPeers[0];
+      setRemotePeer(peerId);
       createOffer()
         .then((offer) => {
           sendOffer(offer);
         })
         .catch((err) => {
           console.error("Failed to create offer:", err);
+          setRemotePeer(null);
         });
     }
-  }, [peers.length, pc, remotePeer, createOffer, sendOffer]);
+  }, [joined, pc, initialPeers.length, remotePeer, createOffer, sendOffer]);
 
   if (!roomId) {
     return (

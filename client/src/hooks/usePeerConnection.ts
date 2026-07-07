@@ -30,10 +30,15 @@ export function usePeerConnection(
   const [connectionState, setConnectionState] = useState<RTCConnectionState>("new");
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const handlersRef = useRef(handlers);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     handlersRef.current = handlers;
   }, [handlers]);
+
+  useEffect(() => {
+    remoteStreamRef.current = remoteStream;
+  }, [remoteStream]);
 
   useEffect(() => {
     let mounted = true;
@@ -57,13 +62,14 @@ export function usePeerConnection(
 
       peerConnection.ontrack = (event) => {
         if (mounted) {
-          if (!remoteStream) {
+          if (!remoteStreamRef.current) {
             const newRemoteStream = new MediaStream();
             newRemoteStream.addTrack(event.track);
+            remoteStreamRef.current = newRemoteStream;
             setRemoteStream(newRemoteStream);
             handlersRef.current.onRemoteStream?.(newRemoteStream);
           } else {
-            remoteStream.addTrack(event.track);
+            remoteStreamRef.current.addTrack(event.track);
           }
         }
       };
