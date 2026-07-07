@@ -10,15 +10,22 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-slate-900 text-slate-100">
-      <h1 className="text-4xl font-bold">MiniRTC</h1>
-      <p className="text-slate-400 text-lg">1:1 audio/video calling</p>
+    <div className="min-h-screen flex flex-col items-center justify-center gap-8 bg-slate-900 text-slate-100">
+      <div className="text-center">
+        <h1 className="text-5xl font-bold mb-2">MiniRTC</h1>
+        <p className="text-slate-400 text-lg">1:1 audio/video calling</p>
+      </div>
+
       <button
         onClick={handleCreateRoom}
-        className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-semibold text-white transition-colors"
+        className="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-semibold text-white transition-colors text-lg"
       >
         Create Room
       </button>
+
+      <p className="text-slate-500 text-sm mt-8 max-w-md text-center">
+        Create a new room to get a shareable link. Send the link to someone to start a call.
+      </p>
     </div>
   );
 }
