@@ -101,11 +101,27 @@ export default function Room() {
     );
   }
 
+  const handleAudioToggle = (enabled: boolean) => {
+    if (stream) {
+      stream.getAudioTracks().forEach((track) => {
+        track.enabled = enabled;
+      });
+    }
+  };
+
+  const handleVideoToggle = (enabled: boolean) => {
+    setVideoEnabled(enabled);
+  };
+
   return (
     <InCall
       roomId={roomId}
       localStream={stream}
       remoteStream={remoteStream}
+      audioEnabled={true}
+      videoEnabled={videoEnabled}
+      onAudioToggle={handleAudioToggle}
+      onVideoToggle={handleVideoToggle}
     />
   );
 }
