@@ -5,6 +5,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
+    setupFiles: [],
+    environmentMatchGlobs: [
+      ["client/**/*.test.tsx", "jsdom"],
+    ],
   },
   resolve: {
     alias: {
