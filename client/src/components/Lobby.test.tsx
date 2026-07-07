@@ -1,0 +1,202 @@
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { Lobby } from "./Lobby";
+
+describe("Lobby", () => {
+  beforeEach(() => {
+    global.fetch = vi.fn();
+  });
+
+  it("renders room ID and join prompt", () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ available: true }),
+    });
+
+    render(
+      <Lobby
+        roomId="test123456789012345"
+        stream={null}
+        loading={false}
+        onJoin={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Ready to join?")).toBeDefined();
+    expect(screen.getByText(/Room ID: test123456789012345/)).toBeDefined();
+  });
+
+  it("calls availability probe on mount", () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ available: true }),
+    });
+
+    render(
+      <Lobby
+        roomId="test123456789012345"
+        stream={null}
+        loading={false}
+        onJoin={vi.fn()}
+      />
+    );
+
+    expect(global.fetch).toHaveBeenCalledWith("/api/rooms/test123456789012345/available");
+  });
+
+  it("shows room-full message when room is unavailable", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ available: false }),
+    });
+
+    render(
+      <Lobby
+        roomId="test123456789012345"
+        stream={null}
+        loading={false}
+        onJoin={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Room is full. Unable to join.")).toBeDefined();
+    });
+  });
+
+  it("disables Join button when room is full", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ available: false }),
+    });
+
+    render(
+      <Lobby
+        roomId="test123456789012345"
+        stream={null}
+        loading={false}
+        onJoin={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      const button = screen.getByRole("button", { name: /join call/i });
+      expect(button.hasAttribute("disabled")).toBe(true);
+    });
+  });
+
+  it("shows probe error when fetch fails", async () => {
+    (global.fetch as any).mockRejectedValueOnce(new Error("Network error"));
+
+    render(
+      <Lobby
+        roomId="test123456789012345"
+        stream={null}
+        loading={false}
+        onJoin={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Network error checking availability/)).toBeDefined();
+    });
+  });
+
+  it("displays video element when stream is available", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ available: true }),
+    });
+
+    const mockStream = {} as MediaStream;
+
+    render(
+      <Lobby
+        roomId="test123456789012345"
+        stream={mockStream}
+        loading={false}
+        onJoin={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Local preview")).toBeDefined();
+    });
+
+    const video = screen.getByText("Local preview").parentElement?.querySelector("video");
+    expect(video).toBeDefined();
+  });
+
+  it("calls onJoin when Join button is clicked", async () => {
+    const user = userEvent.setup();
+    const onJoin = vi.fn();
+
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ available: true }),
+    });
+
+    render(
+      <Lobby
+        roomId="test123456789012345"
+        stream={null}
+        loading={false}
+        onJoin={onJoin}
+      />
+    );
+
+    await waitFor(() => {
+      const button = screen.getByRole("button", { name: /join call/i });
+      expect(button).toBeDefined();
+    });
+
+    const button = screen.getByRole("button", { name: /join call/i });
+    await user.click(button);
+
+    expect(onJoin).toHaveBeenCalled();
+  });
+
+  it("disables Join button when loading", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ available: true }),
+    });
+
+    render(
+      <Lobby
+        roomId="test123456789012345"
+        stream={null}
+        loading={true}
+        onJoin={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      const button = screen.getByRole("button");
+      expect(button.hasAttribute("disabled")).toBe(true);
+      expect(button.textContent).toMatch(/Requesting access/);
+    });
+  });
+
+  it("displays error message when passed", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ available: true }),
+    });
+
+    render(
+      <Lobby
+        roomId="test123456789012345"
+        stream={null}
+        loading={false}
+        onJoin={vi.fn()}
+        error="Microphone access denied"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Microphone access denied")).toBeDefined();
+    });
+  });
+});

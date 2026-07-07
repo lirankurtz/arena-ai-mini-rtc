@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface LobbyProps {
   roomId: string;
@@ -17,9 +17,16 @@ export function Lobby({
   joinDisabled = false,
   error,
 }: LobbyProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [probeLoading, setProbeLoading] = useState(true);
   const [roomFull, setRoomFull] = useState(false);
   const [probeError, setProbeError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (videoRef.current && stream && stream instanceof MediaStream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
 
   useEffect(() => {
     let mounted = true;
@@ -91,10 +98,10 @@ export function Lobby({
       {stream && (
         <div className="bg-slate-800 rounded-lg overflow-hidden shadow-lg">
           <video
+            ref={videoRef}
             autoPlay
             muted
             playsInline
-            srcObject={stream}
             className="w-80 h-60 object-cover bg-black"
           />
           <div className="bg-slate-700 px-4 py-2 text-center text-sm text-slate-300">
