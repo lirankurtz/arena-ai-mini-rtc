@@ -18,7 +18,7 @@ export default function Room() {
   const [remotePeer, setRemotePeer] = useState<string | null>(null);
   const [initialPeers, setInitialPeers] = useState<string[]>([]);
 
-  const { connected, error: signalingError, peers, offer, answer, iceCandidate, sendJoin, sendOffer, sendAnswer, sendIceCandidate, clearOffer, clearAnswer, clearIceCandidate } = useSignaling();
+  const { connected, error: signalingError, peers, offer, answer, iceCandidate, sendJoin, sendOffer, sendAnswer, sendIceCandidate, clearOffer, clearAnswer, clearIceCandidate, leave } = useSignaling();
   const [dismissedErrors, setDismissedErrors] = useState<Set<string>>(new Set());
 
   const getDisplayedError = () => {
@@ -160,6 +160,7 @@ export default function Room() {
   };
 
   const handleLeave = () => {
+    leave();
     if (stream) {
       stream.getTracks().forEach((track) => {
         track.stop();
