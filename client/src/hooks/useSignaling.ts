@@ -3,61 +3,58 @@ import { ClientMessage, ServerMessage } from "@mini-rtc/shared";
 
 export type SignalingError = "connection-failed" | "already-joined" | "invalid-room" | "room-full";
 
-export interface SignalingHandlers {
-  onJoined?: (selfId: string, peers: string[]) => void;
-  onPeerJoined?: (peerId: string) => void;
-  onPeerLeft?: (peerId: string) => void;
-  onOffer?: (sdp: string, from: string) => void;
-  onAnswer?: (sdp: string, from: string) => void;
-  onIceCandidate?: (candidate: string, from: string) => void;
-  onError?: (code: SignalingError, message: string) => void;
-}
-
 interface UseSignalingResult {
   connected: boolean;
   error: SignalingError | null;
+  selfId: string | null;
+  peers: string[];
+  offer: { sdp: string; from: string } | null;
+  answer: { sdp: string; from: string } | null;
+  iceCandidate: { candidate: string; from: string } | null;
   sendJoin: (roomId: string) => void;
   sendOffer: (sdp: string) => void;
   sendAnswer: (sdp: string) => void;
   sendIceCandidate: (candidate: string) => void;
+  clearOffer: () => void;
+  clearAnswer: () => void;
+  clearIceCandidate: () => void;
   leave: () => void;
 }
 
-export function useSignaling(handlers: SignalingHandlers): UseSignalingResult {
+export function useSignaling(): UseSignalingResult {
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<SignalingError | null>(null);
+  const [selfId, setSelfId] = useState<string | null>(null);
+  const [peers, setPeers] = useState<string[]>([]);
+  const [offer, setOffer] = useState<{ sdp: string; from: string } | null>(null);
+  const [answer, setAnswer] = useState<{ sdp: string; from: string } | null>(null);
+  const [iceCandidate, setIceCandidate] = useState<{ candidate: string; from: string } | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const handlersRef = useRef(handlers);
-
-  useEffect(() => {
-    handlersRef.current = handlers;
-  }, [handlers]);
 
   const handleMessage = useCallback((msg: ServerMessage) => {
-    const h = handlersRef.current;
-
     switch (msg.type) {
       case "joined":
-        h.onJoined?.(msg.selfId, msg.peers);
+        setSelfId(msg.selfId);
+        setPeers(msg.peers);
         break;
       case "peer-joined":
-        h.onPeerJoined?.(msg.peerId);
+        setPeers((prev) => [...prev, msg.peerId]);
         break;
       case "peer-left":
-        h.onPeerLeft?.(msg.peerId);
+        setPeers((prev) => prev.filter((id) => id !== msg.peerId));
         break;
       case "offer":
-        h.onOffer?.(msg.sdp, msg.from);
+        setOffer({ sdp: msg.sdp, from: msg.from });
         break;
       case "answer":
-        h.onAnswer?.(msg.sdp, msg.from);
+        setAnswer({ sdp: msg.sdp, from: msg.from });
         break;
       case "ice-candidate":
-        h.onIceCandidate?.(msg.candidate, msg.from);
+        setIceCandidate({ candidate: msg.candidate, from: msg.from });
         break;
       case "error":
         const errorCode = msg.code as SignalingError;
-        h.onError?.(errorCode, msg.message);
+        setError(errorCode);
         break;
     }
   }, []);
@@ -103,6 +100,18 @@ export function useSignaling(handlers: SignalingHandlers): UseSignalingResult {
       wsRef.current.close();
     }
   }, [send]);
+
+  const clearOffer = useCallback(() => {
+    setOffer(null);
+  }, []);
+
+  const clearAnswer = useCallback(() => {
+    setAnswer(null);
+  }, []);
+
+  const clearIceCandidate = useCallback(() => {
+    setIceCandidate(null);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -163,10 +172,18 @@ export function useSignaling(handlers: SignalingHandlers): UseSignalingResult {
   return {
     connected,
     error,
+    selfId,
+    peers,
+    offer,
+    answer,
+    iceCandidate,
     sendJoin,
     sendOffer,
     sendAnswer,
     sendIceCandidate,
+    clearOffer,
+    clearAnswer,
+    clearIceCandidate,
     leave,
   };
 }
