@@ -15,7 +15,10 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@mini-rtc/shared": ["../shared/src"]
+    }
   },
   "include": ["src"]
 }

@@ -11,7 +11,10 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": true
+    "noUnusedParameters": true,
+    "paths": {
+      "@mini-rtc/shared": ["../shared/src"]
+    }
   },
   "include": ["src"]
 }
