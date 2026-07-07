@@ -1,9 +1,10 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useLocalMedia } from "../hooks/useLocalMedia";
-import { useSignaling, SignalingError } from "../hooks/useSignaling";
+import { useSignaling } from "../hooks/useSignaling";
 import { usePeerConnection } from "../hooks/usePeerConnection";
 import { Lobby } from "../components/Lobby";
+import { InCall } from "../components/InCall";
 
 export default function Room() {
   const { id: roomId } = useParams<{ id: string }>();
@@ -15,7 +16,7 @@ export default function Room() {
   const [joined, setJoined] = useState(false);
   const [remotePeer, setRemotePeer] = useState<string | null>(null);
 
-  const { connected, error, peers, offer, answer, iceCandidate, sendJoin, sendOffer, sendAnswer, sendIceCandidate, clearOffer, clearAnswer, clearIceCandidate } = useSignaling();
+  const { connected, peers, offer, answer, iceCandidate, sendJoin, sendOffer, sendAnswer, sendIceCandidate, clearOffer, clearAnswer, clearIceCandidate } = useSignaling();
 
   const { pc, remoteStream, createOffer, createAnswer, setRemoteDescription, addIceCandidate } = usePeerConnection(stream, {
     onIceCandidate: (candidate) => {
@@ -101,21 +102,11 @@ export default function Room() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-900 text-slate-100">
-      <h1 className="text-3xl font-bold">In call: {roomId}</h1>
-      {error && (
-        <div className="bg-red-900 text-red-100 px-6 py-3 rounded-lg">
-          Error: {error}
-        </div>
-      )}
-      {!connected && (
-        <p className="text-slate-400">Connecting...</p>
-      )}
-      {remotePeer && (
-        <p className="text-slate-400">Connected to: {remotePeer}</p>
-      )}
-      <p className="text-slate-400">Placeholder for in-call UI</p>
-    </div>
+    <InCall
+      roomId={roomId}
+      localStream={stream}
+      remoteStream={remoteStream}
+    />
   );
 }
 
