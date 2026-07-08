@@ -69,13 +69,35 @@ describe("useSignaling: offerer selection (glare avoidance)", () => {
     expect(hook.result.current.initialPeers).toEqual([]);
   });
 
-  it("surfaces peerLeft when a peer leaves", async () => {
+  it("surfaces peerLeft and clears the offerer snapshot when a peer leaves", async () => {
     const { hook, ws } = await connected();
 
     act(() => ws.emit({ type: "joined", selfId: "A", peers: ["B"] }));
+    expect(hook.result.current.initialPeers).toEqual(["B"]);
+
     act(() => ws.emit({ type: "peer-left", peerId: "B" }));
 
     expect(hook.result.current.peerLeft).toBe("B");
     expect(hook.result.current.peers).toEqual([]);
+    // Cleared so a rejoining peer is the sole offerer (no glare on reconnect).
+    expect(hook.result.current.initialPeers).toEqual([]);
+  });
+
+  it("leave() keeps the socket open and resets room state so the user can rejoin", async () => {
+    const { hook, ws } = await connected();
+
+    act(() => ws.emit({ type: "joined", selfId: "A", peers: ["B"] }));
+    act(() => hook.result.current.leave());
+
+    // A leave message was sent, but the socket stays open for a future rejoin.
+    expect(ws.sent.map((m) => JSON.parse(m).type)).toContain("leave");
+    expect(ws.readyState).toBe(MockWebSocket.OPEN);
+    expect(hook.result.current.connected).toBe(true);
+    expect(hook.result.current.initialPeers).toEqual([]);
+    expect(hook.result.current.peers).toEqual([]);
+
+    // Rejoining sends another join over the same socket.
+    act(() => hook.result.current.sendJoin("abcdefghij0123456789x"));
+    expect(ws.sent.map((m) => JSON.parse(m).type).filter((t) => t === "join")).toHaveLength(1);
   });
 });

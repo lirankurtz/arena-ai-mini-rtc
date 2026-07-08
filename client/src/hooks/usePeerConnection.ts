@@ -15,7 +15,7 @@ interface UsePeerConnectionResult {
   createAnswer: () => Promise<string>;
   setRemoteDescription: (type: "offer" | "answer", sdp: string) => Promise<void>;
   addIceCandidate: (candidate: string) => Promise<void>;
-  clearRemoteStream: () => void;
+  resetConnection: () => void;
 }
 
 const STUN_SERVERS = [
@@ -30,6 +30,7 @@ export function usePeerConnection(
   const [pc, setPc] = useState<RTCPeerConnection | null>(null);
   const [connectionState, setConnectionState] = useState<RTCConnectionState>("new");
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [resetKey, setResetKey] = useState(0);
   const handlersRef = useRef(handlers);
   const remoteStreamRef = useRef<MediaStream | null>(null);
 
@@ -94,7 +95,7 @@ export function usePeerConnection(
       mounted = false;
       peerConnection.close();
     };
-  }, [localStream]);
+  }, [localStream, resetKey]);
 
   const createOffer = useCallback(async (): Promise<string> => {
     if (!pc) {
@@ -128,10 +129,15 @@ export function usePeerConnection(
     [pc]
   );
 
-  const clearRemoteStream = useCallback(() => {
+  // Tear down the current peer connection and spin up a fresh one, clearing the
+  // remote stream. Used when a peer leaves so a subsequent rejoin negotiates on
+  // a clean RTCPeerConnection instead of a stale, already-closed session.
+  const resetConnection = useCallback(() => {
     remoteStreamRef.current?.getTracks().forEach((track) => track.stop());
     remoteStreamRef.current = null;
     setRemoteStream(null);
+    setConnectionState("new");
+    setResetKey((k) => k + 1);
   }, []);
 
   const addIceCandidate = useCallback(
@@ -155,6 +161,6 @@ export function usePeerConnection(
     createAnswer,
     setRemoteDescription,
     addIceCandidate,
-    clearRemoteStream,
+    resetConnection,
   };
 }

@@ -52,6 +52,9 @@ export function useSignaling(): UseSignalingResult {
         break;
       case "peer-left":
         setPeers((prev) => prev.filter((id) => id !== msg.peerId));
+        // The remaining peer drops its offerer snapshot so that if someone
+        // rejoins, only the (re)joining peer offers — avoiding SDP glare.
+        setInitialPeers([]);
         setPeerLeft(msg.peerId);
         break;
       case "offer":
@@ -106,10 +109,16 @@ export function useSignaling(): UseSignalingResult {
   );
 
   const leave = useCallback(() => {
+    // Leave the room but keep the WebSocket open so the user can rejoin (or
+    // join another room) without reconnecting. Reset all room-scoped state.
     send({ type: "leave" });
-    if (wsRef.current) {
-      wsRef.current.close();
-    }
+    setSelfId(null);
+    setPeers([]);
+    setInitialPeers([]);
+    setOffer(null);
+    setAnswer(null);
+    setIceCandidate(null);
+    setPeerLeft(null);
   }, [send]);
 
   const clearOffer = useCallback(() => {

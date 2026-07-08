@@ -44,7 +44,7 @@ export default function Room() {
     }
   };
 
-  const { pc, connectionState, remoteStream, createOffer, createAnswer, setRemoteDescription, addIceCandidate, clearRemoteStream } = usePeerConnection(stream, {
+  const { pc, connectionState, remoteStream, createOffer, createAnswer, setRemoteDescription, addIceCandidate, resetConnection } = usePeerConnection(stream, {
     onIceCandidate: (candidate) => {
       sendIceCandidate(candidate);
     },
@@ -83,11 +83,11 @@ export default function Room() {
 
   useEffect(() => {
     if (peerLeft) {
-      clearRemoteStream();
+      resetConnection();
       setRemotePeer(null);
       clearPeerLeft();
     }
-  }, [peerLeft, clearRemoteStream, clearPeerLeft]);
+  }, [peerLeft, resetConnection, clearPeerLeft]);
 
   useEffect(() => {
     if (iceCandidate) {
@@ -161,12 +161,12 @@ export default function Room() {
   };
 
   const handleLeave = () => {
+    // Leave the room but keep local media (for the lobby preview / rejoin) and
+    // the signaling socket open. Reset the peer connection so a rejoin gets a
+    // fresh negotiation. Local tracks are stopped on unmount by useLocalMedia.
     leave();
-    if (stream) {
-      stream.getTracks().forEach((track) => {
-        track.stop();
-      });
-    }
+    resetConnection();
+    setRemotePeer(null);
     setJoined(false);
   };
 
