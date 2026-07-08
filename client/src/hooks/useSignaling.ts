@@ -8,9 +8,11 @@ interface UseSignalingResult {
   error: SignalingError | null;
   selfId: string | null;
   peers: string[];
+  initialPeers: string[];
   offer: { sdp: string; from: string } | null;
   answer: { sdp: string; from: string } | null;
   iceCandidate: { candidate: string; from: string } | null;
+  peerLeft: string | null;
   sendJoin: (roomId: string) => void;
   sendOffer: (sdp: string) => void;
   sendAnswer: (sdp: string) => void;
@@ -18,6 +20,7 @@ interface UseSignalingResult {
   clearOffer: () => void;
   clearAnswer: () => void;
   clearIceCandidate: () => void;
+  clearPeerLeft: () => void;
   leave: () => void;
 }
 
@@ -26,9 +29,11 @@ export function useSignaling(): UseSignalingResult {
   const [error, setError] = useState<SignalingError | null>(null);
   const [selfId, setSelfId] = useState<string | null>(null);
   const [peers, setPeers] = useState<string[]>([]);
+  const [initialPeers, setInitialPeers] = useState<string[]>([]);
   const [offer, setOffer] = useState<{ sdp: string; from: string } | null>(null);
   const [answer, setAnswer] = useState<{ sdp: string; from: string } | null>(null);
   const [iceCandidate, setIceCandidate] = useState<{ candidate: string; from: string } | null>(null);
+  const [peerLeft, setPeerLeft] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   const handleMessage = useCallback((msg: ServerMessage) => {
@@ -36,12 +41,18 @@ export function useSignaling(): UseSignalingResult {
       case "joined":
         setSelfId(msg.selfId);
         setPeers(msg.peers);
+        // Snapshot of the room roster at join time. Only a peer that joins an
+        // occupied room becomes the offerer; peers already present just answer.
+        // Kept separate from `peers` so later peer-joined events don't turn the
+        // existing peer into a second offerer (which would cause SDP glare).
+        setInitialPeers(msg.peers);
         break;
       case "peer-joined":
         setPeers((prev) => [...prev, msg.peerId]);
         break;
       case "peer-left":
         setPeers((prev) => prev.filter((id) => id !== msg.peerId));
+        setPeerLeft(msg.peerId);
         break;
       case "offer":
         setOffer({ sdp: msg.sdp, from: msg.from });
@@ -113,6 +124,10 @@ export function useSignaling(): UseSignalingResult {
     setIceCandidate(null);
   }, []);
 
+  const clearPeerLeft = useCallback(() => {
+    setPeerLeft(null);
+  }, []);
+
   useEffect(() => {
     let mounted = true;
 
@@ -178,9 +193,11 @@ export function useSignaling(): UseSignalingResult {
     error,
     selfId,
     peers,
+    initialPeers,
     offer,
     answer,
     iceCandidate,
+    peerLeft,
     sendJoin,
     sendOffer,
     sendAnswer,
@@ -188,6 +205,7 @@ export function useSignaling(): UseSignalingResult {
     clearOffer,
     clearAnswer,
     clearIceCandidate,
+    clearPeerLeft,
     leave,
   };
 }

@@ -16,9 +16,8 @@ export default function Room() {
   });
   const [joined, setJoined] = useState(false);
   const [remotePeer, setRemotePeer] = useState<string | null>(null);
-  const [initialPeers, setInitialPeers] = useState<string[]>([]);
 
-  const { connected, error: signalingError, peers, offer, answer, iceCandidate, sendJoin, sendOffer, sendAnswer, sendIceCandidate, clearOffer, clearAnswer, clearIceCandidate, leave } = useSignaling();
+  const { connected, error: signalingError, initialPeers, offer, answer, iceCandidate, peerLeft, sendJoin, sendOffer, sendAnswer, sendIceCandidate, clearOffer, clearAnswer, clearIceCandidate, clearPeerLeft, leave } = useSignaling();
   const [dismissedErrors, setDismissedErrors] = useState<Set<string>>(new Set());
 
   const getDisplayedError = () => {
@@ -45,7 +44,7 @@ export default function Room() {
     }
   };
 
-  const { pc, connectionState, remoteStream, createOffer, createAnswer, setRemoteDescription, addIceCandidate } = usePeerConnection(stream, {
+  const { pc, connectionState, remoteStream, createOffer, createAnswer, setRemoteDescription, addIceCandidate, clearRemoteStream } = usePeerConnection(stream, {
     onIceCandidate: (candidate) => {
       sendIceCandidate(candidate);
     },
@@ -56,12 +55,6 @@ export default function Room() {
       sendJoin(roomId!);
     }
   }, [joined, connected, roomId, stream, sendJoin]);
-
-  useEffect(() => {
-    if (joined && peers.length > 0 && initialPeers.length === 0) {
-      setInitialPeers(peers);
-    }
-  }, [joined, peers, initialPeers.length]);
 
   useEffect(() => {
     if (offer && pc) {
@@ -87,6 +80,14 @@ export default function Room() {
         });
     }
   }, [answer, setRemoteDescription, clearAnswer]);
+
+  useEffect(() => {
+    if (peerLeft) {
+      clearRemoteStream();
+      setRemotePeer(null);
+      clearPeerLeft();
+    }
+  }, [peerLeft, clearRemoteStream, clearPeerLeft]);
 
   useEffect(() => {
     if (iceCandidate) {

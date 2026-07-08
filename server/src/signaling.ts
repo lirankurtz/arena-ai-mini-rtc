@@ -12,31 +12,32 @@ interface PeerSession {
 }
 
 function createSession(peerId: string, ws: WebSocket, roomManager: RoomManager): PeerSession {
-  let currentRoom: string | null = null;
-
-  const send = (msg: ServerMessage) => {
-    if (ws.readyState === ws.OPEN) {
-      ws.send(JSON.stringify(msg));
-    }
-  };
-
-  const broadcastToRoom = (msg: ServerMessage, excludePeerId?: string) => {
-    if (!currentRoom) {
-      return;
-    }
-    const peers = roomManager.peersOf(currentRoom);
-    peers.forEach((pid) => {
-      if (excludePeerId && pid === excludePeerId) {
+  const session: PeerSession = {
+    peerId,
+    currentRoom: null,
+    send(msg: ServerMessage) {
+      if (ws.readyState === ws.OPEN) {
+        ws.send(JSON.stringify(msg));
+      }
+    },
+    broadcastToRoom(msg: ServerMessage, excludePeerId?: string) {
+      if (!session.currentRoom) {
         return;
       }
-      const peerWs = roomManager.getPeerSocket(currentRoom!, pid);
-      if (peerWs && peerWs.readyState === peerWs.OPEN) {
-        peerWs.send(JSON.stringify(msg));
-      }
-    });
+      const peers = roomManager.peersOf(session.currentRoom);
+      peers.forEach((pid) => {
+        if (excludePeerId && pid === excludePeerId) {
+          return;
+        }
+        const peerWs = roomManager.getPeerSocket(session.currentRoom!, pid);
+        if (peerWs && peerWs.readyState === peerWs.OPEN) {
+          peerWs.send(JSON.stringify(msg));
+        }
+      });
+    },
   };
 
-  return { peerId, currentRoom, send, broadcastToRoom };
+  return session;
 }
 
 function handleJoin(

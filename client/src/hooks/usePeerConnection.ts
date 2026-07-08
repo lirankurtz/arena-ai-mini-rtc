@@ -15,6 +15,7 @@ interface UsePeerConnectionResult {
   createAnswer: () => Promise<string>;
   setRemoteDescription: (type: "offer" | "answer", sdp: string) => Promise<void>;
   addIceCandidate: (candidate: string) => Promise<void>;
+  clearRemoteStream: () => void;
 }
 
 const STUN_SERVERS = [
@@ -127,6 +128,12 @@ export function usePeerConnection(
     [pc]
   );
 
+  const clearRemoteStream = useCallback(() => {
+    remoteStreamRef.current?.getTracks().forEach((track) => track.stop());
+    remoteStreamRef.current = null;
+    setRemoteStream(null);
+  }, []);
+
   const addIceCandidate = useCallback(
     async (candidateJson: string) => {
       if (!pc) {
@@ -148,5 +155,6 @@ export function usePeerConnection(
     createAnswer,
     setRemoteDescription,
     addIceCandidate,
+    clearRemoteStream,
   };
 }
