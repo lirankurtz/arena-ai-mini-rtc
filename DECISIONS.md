@@ -72,6 +72,7 @@
 **Why:** Simple, cheap, sufficient for MVP. Single deployment, dynamic control (SSR if needed later).
 
 **Tradeoffs:**
+
 - **Pros:** Single deployment, dynamic control (middleware, SSR), easier to add features that need both client+server
 - **Cons:** More maintenance (rebuild/redeploy whole app for frontend changes), no static file caching/CDN
 
@@ -104,25 +105,3 @@ When current architecture breaks (server restarts lose state, need resilience):
 - Connections: multiple Node instances behind Zookeeper
 - Media relay: SFU still doesn't relay (p2p stays), so bandwidth cost stays low
 - If TURN fallback added: bandwidth becomes the bottleneck, not CPU or connections
-
-## System Bottlenecks: Where Resources Go
-
-**TURN vs SFU (not comparable—different problems):**
-
-- **TURN** (2-peer relay when NAT blocks): ~2 Mbps through server (1 in, 1 out). Only kicks in when p2p fails.
-- **SFU** (N-peer hub): ~N in + (N-1)×N out. E.g., 10 peers = 100 Mbps through server. Solves scaling, not connectivity.
-
-**p2p full mesh (no server relay):**
-
-- Cost: O(N²) client CPU (each peer encodes for N-1 others)
-- Cheap on server, expensive on clients
-- Works up to handful of peers, then CPU explodes
-
-**Ranking by resource cost (current architecture):**
-
-| Component      | Cost       | Why                |
-| -------------- | ---------- | ------------------ |
-| Signaling (WS) | Low        | Just JSON routing  |
-| Room state     | Negligible | Tiny in-memory Map |
-
-**Key insight:** p2p media (no relay) = cheap on server. If TURN fallback added, bandwidth becomes bottleneck. If scaling to groups requires SFU, server bandwidth becomes bottleneck.
