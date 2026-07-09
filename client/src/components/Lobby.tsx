@@ -34,8 +34,6 @@ export function Lobby({
     }
   }, [stream, videoEnabled]);
 
-  const isJoinDisabled = joinDisabled || loading;
-
   if (roomFull) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-slate-900 text-slate-100 p-4">
@@ -54,6 +52,8 @@ export function Lobby({
       </div>
     );
   }
+
+  const isJoinDisabled = joinDisabled || loading;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-slate-900 text-slate-100 p-4">

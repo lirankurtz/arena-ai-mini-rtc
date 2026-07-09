@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useLocalMedia } from "../hooks/useLocalMedia";
 import { useRoomAvailability } from "../hooks/useRoomAvailability";
@@ -10,6 +10,7 @@ import { ErrorBanner } from "../components/ErrorBanner";
 
 export default function Room() {
   const { id: roomId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [videoEnabled, setVideoEnabled] = useState(false);
   const { available } = useRoomAvailability(roomId ?? "");
   const roomFull = available === false;
@@ -22,6 +23,12 @@ export default function Room() {
 
   const { connected, error: signalingError, initialPeers, offer, answer, iceCandidate, peerLeft, peerVideoEnabled, sendJoin, sendOffer, sendAnswer, sendIceCandidate, sendVideoState, clearOffer, clearAnswer, clearIceCandidate, clearPeerLeft, leave } = useSignaling();
   const [dismissedErrors, setDismissedErrors] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (joined && signalingError === "room-full") {
+      navigate("/");
+    }
+  }, [joined, signalingError, navigate]);
 
   const getDisplayedError = () => {
     if (mediaError && !dismissedErrors.has("media")) {
