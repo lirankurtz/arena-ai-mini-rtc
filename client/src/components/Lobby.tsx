@@ -28,7 +28,14 @@ export function Lobby({
 }: LobbyProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Show full-room screen instead of lobby
+  useEffect(() => {
+    if (videoRef.current && stream && stream instanceof MediaStream && videoEnabled) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream, videoEnabled]);
+
+  const isJoinDisabled = joinDisabled || loading;
+
   if (roomFull) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-slate-900 text-slate-100 p-4">
@@ -47,14 +54,6 @@ export function Lobby({
       </div>
     );
   }
-
-  useEffect(() => {
-    if (videoRef.current && stream && stream instanceof MediaStream && videoEnabled) {
-      videoRef.current.srcObject = stream;
-    }
-  }, [stream, videoEnabled]);
-
-  const isJoinDisabled = joinDisabled || loading;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-slate-900 text-slate-100 p-4">
