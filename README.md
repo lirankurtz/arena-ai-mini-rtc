@@ -91,6 +91,7 @@ First request may take 30s (free tier cold start). Otherwise instant.
 - **Scalability**: Single-process in-memory room manager. Doesn't scale to multiple servers without coordination (Redis, etc.).
 - **Call recording**: No recording or replay.
 - **Bandwidth management**: No adaptive bitrate or bandwidth constraints.
+- **Mobile optimization**: Desktop-first UI. Works on mobile browsers but not optimized for small screens.
 
 ## Notes
 
