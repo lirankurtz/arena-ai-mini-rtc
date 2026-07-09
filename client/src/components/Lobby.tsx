@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AudioIndicator } from "./AudioIndicator";
+import { ShareLink } from "./ShareLink";
 
 interface LobbyProps {
   roomId: string;
@@ -73,9 +74,10 @@ export function Lobby({
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-slate-900 text-slate-100 p-4">
-      <div className="text-center">
+      <div className="text-center flex flex-col items-center gap-3">
         <h1 className="text-4xl font-bold mb-2">Ready to join?</h1>
-        <p className="text-slate-400">Room ID: {roomId}</p>
+        <p className="text-slate-400 text-sm">Share this link to invite someone:</p>
+        <ShareLink roomId={roomId} />
       </div>
 
       {probeLoading && (
