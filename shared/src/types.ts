@@ -4,6 +4,7 @@ export type ClientMessage =
   | { type: "offer"; sdp: string }
   | { type: "answer"; sdp: string }
   | { type: "ice-candidate"; candidate: string }
+  | { type: "video-state"; enabled: boolean }
   | { type: "leave" };
 
 // Server → Client
@@ -14,4 +15,5 @@ export type ServerMessage =
   | { type: "offer"; sdp: string; from: string }
   | { type: "answer"; sdp: string; from: string }
   | { type: "ice-candidate"; candidate: string; from: string }
+  | { type: "peer-video-state"; enabled: boolean; from: string }
   | { type: "error"; code: string; message: string };

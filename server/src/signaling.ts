@@ -124,6 +124,22 @@ function handleIceCandidate(
   );
 }
 
+function handleVideoState(
+  msg: ClientMessage & { type: "video-state" },
+  session: PeerSession,
+  roomManager: RoomManager
+): void {
+  relayToOtherPeer(
+    {
+      type: "peer-video-state",
+      enabled: msg.enabled,
+      from: session.peerId,
+    },
+    session,
+    roomManager
+  );
+}
+
 export function attachWebSocketServer(httpServer: Server, roomManager: RoomManager): WebSocketServer {
   const wss = new WebSocketServer({ server: httpServer });
 
@@ -148,6 +164,9 @@ export function attachWebSocketServer(httpServer: Server, roomManager: RoomManag
             break;
           case "ice-candidate":
             handleIceCandidate(msg, session, roomManager);
+            break;
+          case "video-state":
+            handleVideoState(msg, session, roomManager);
             break;
         }
       } catch (err) {

@@ -24,7 +24,9 @@ describe("Lobby", () => {
     );
 
     expect(screen.getByText("Ready to join?")).toBeDefined();
-    expect(screen.getByText(/Room ID: test123456789012345/)).toBeDefined();
+    // Room ID is now surfaced as a shareable link URL.
+    expect(screen.getByText(/room\/test123456789012345/)).toBeDefined();
+    expect(screen.getByRole("button", { name: /copy link/i })).toBeDefined();
   });
 
   it("calls availability probe on mount", () => {
@@ -169,9 +171,8 @@ describe("Lobby", () => {
     );
 
     await waitFor(() => {
-      const button = screen.getByRole("button");
+      const button = screen.getByRole("button", { name: /Requesting access/i });
       expect(button.hasAttribute("disabled")).toBe(true);
-      expect(button.textContent).toMatch(/Requesting access/);
     });
   });
 

@@ -17,7 +17,7 @@ export default function Room() {
   const [joined, setJoined] = useState(false);
   const [remotePeer, setRemotePeer] = useState<string | null>(null);
 
-  const { connected, error: signalingError, initialPeers, offer, answer, iceCandidate, peerLeft, sendJoin, sendOffer, sendAnswer, sendIceCandidate, clearOffer, clearAnswer, clearIceCandidate, clearPeerLeft, leave } = useSignaling();
+  const { connected, error: signalingError, initialPeers, offer, answer, iceCandidate, peerLeft, peerVideoEnabled, sendJoin, sendOffer, sendAnswer, sendIceCandidate, sendVideoState, clearOffer, clearAnswer, clearIceCandidate, clearPeerLeft, leave } = useSignaling();
   const [dismissedErrors, setDismissedErrors] = useState<Set<string>>(new Set());
 
   const getDisplayedError = () => {
@@ -44,7 +44,7 @@ export default function Room() {
     }
   };
 
-  const { pc, connectionState, remoteStream, createOffer, createAnswer, setRemoteDescription, addIceCandidate, resetConnection } = usePeerConnection(stream, {
+  const { pc, connectionState, remoteStream, remoteHasVideo, createOffer, createAnswer, setRemoteDescription, addIceCandidate, resetConnection } = usePeerConnection(stream, {
     onIceCandidate: (candidate) => {
       sendIceCandidate(candidate);
     },
@@ -157,7 +157,19 @@ export default function Room() {
   };
 
   const handleVideoToggle = (enabled: boolean) => {
-    setVideoEnabled(enabled);
+    // Toggle the existing video track in place (like mute) instead of changing
+    // the getUserMedia constraints. Re-running getUserMedia mid-call would
+    // produce a new MediaStream, which tears down and rebuilds the peer
+    // connection — blanking our own view and freezing the remote's. This keeps
+    // the same stream and connection; the track just stops producing frames.
+    if (stream) {
+      stream.getVideoTracks().forEach((track) => {
+        track.enabled = enabled;
+      });
+    }
+    // The remote can't tell a disabled track from a black picture, so tell it
+    // explicitly to show a "Camera off" placeholder.
+    sendVideoState(enabled);
   };
 
   const handleLeave = () => {
@@ -180,6 +192,8 @@ export default function Room() {
       onDismissError={handleDismissError}
       audioEnabled={true}
       videoEnabled={videoEnabled}
+      remoteHasVideo={remoteHasVideo}
+      remoteVideoEnabled={peerVideoEnabled}
       onAudioToggle={handleAudioToggle}
       onVideoToggle={handleVideoToggle}
       onLeave={handleLeave}

@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { ErrorBanner } from "./ErrorBanner";
 
+function CameraOffOverlay({ label }: { label: string }) {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-slate-800 text-slate-400">
+      <div className="text-4xl opacity-50">📷</div>
+      <div className="text-sm">{label}</div>
+    </div>
+  );
+}
+
 interface InCallProps {
   roomId: string;
   localStream: MediaStream | null;
@@ -10,6 +19,8 @@ interface InCallProps {
   onDismissError?: () => void;
   audioEnabled?: boolean;
   videoEnabled?: boolean;
+  remoteHasVideo?: boolean;
+  remoteVideoEnabled?: boolean;
   onAudioToggle?: (enabled: boolean) => void;
   onVideoToggle?: (enabled: boolean) => void;
   onLeave?: () => void;
@@ -24,6 +35,8 @@ export function InCall({
   onDismissError,
   audioEnabled = true,
   videoEnabled = false,
+  remoteHasVideo = false,
+  remoteVideoEnabled = true,
   onAudioToggle,
   onVideoToggle,
   onLeave,
@@ -32,6 +45,10 @@ export function InCall({
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const [localAudioEnabled, setLocalAudioEnabled] = useState(audioEnabled);
   const [localVideoEnabled, setLocalVideoEnabled] = useState(videoEnabled);
+  // The remote shows video only if it is sending a live video track (covers an
+  // audio-only peer) AND hasn't signalled its camera off (covers a disabled
+  // track, which still delivers black frames and looks "live").
+  const remoteVideoOn = remoteHasVideo && remoteVideoEnabled;
 
   useEffect(() => {
     if (localVideoRef.current && localStream && localStream instanceof MediaStream) {
@@ -122,14 +139,17 @@ export function InCall({
       <div className="flex-1 flex gap-4 p-4">
         <div className="flex-1 flex flex-col">
           <div className="text-sm text-slate-400 mb-2">Remote video</div>
-          <div className="flex-1 bg-black rounded-lg overflow-hidden">
+          <div className="flex-1 bg-black rounded-lg overflow-hidden relative">
             {remoteStream ? (
-              <video
-                ref={remoteVideoRef}
-                autoPlay
-                playsInline
-                className="w-full h-full object-cover"
-              />
+              <>
+                <video
+                  ref={remoteVideoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                {!remoteVideoOn && <CameraOffOverlay label="Camera off" />}
+              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <div className="text-slate-500">Waiting for remote video...</div>
@@ -140,15 +160,18 @@ export function InCall({
 
         <div className="w-80 flex flex-col">
           <div className="text-sm text-slate-400 mb-2">You</div>
-          <div className="w-80 h-60 bg-black rounded-lg overflow-hidden">
+          <div className="w-80 h-60 bg-black rounded-lg overflow-hidden relative">
             {localStream ? (
-              <video
-                ref={localVideoRef}
-                autoPlay
-                muted
-                playsInline
-                className="w-full h-full object-cover"
-              />
+              <>
+                <video
+                  ref={localVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                {!localVideoEnabled && <CameraOffOverlay label="Camera off" />}
+              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <div className="text-slate-500">No video</div>

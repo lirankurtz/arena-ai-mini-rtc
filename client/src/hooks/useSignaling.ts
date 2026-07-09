@@ -13,10 +13,14 @@ interface UseSignalingResult {
   answer: { sdp: string; from: string } | null;
   iceCandidate: { candidate: string; from: string } | null;
   peerLeft: string | null;
+  // Whether the remote peer's camera is on. Defaults to true; updated when the
+  // peer signals a video toggle. Reset when the peer leaves.
+  peerVideoEnabled: boolean;
   sendJoin: (roomId: string) => void;
   sendOffer: (sdp: string) => void;
   sendAnswer: (sdp: string) => void;
   sendIceCandidate: (candidate: string) => void;
+  sendVideoState: (enabled: boolean) => void;
   clearOffer: () => void;
   clearAnswer: () => void;
   clearIceCandidate: () => void;
@@ -34,6 +38,7 @@ export function useSignaling(): UseSignalingResult {
   const [answer, setAnswer] = useState<{ sdp: string; from: string } | null>(null);
   const [iceCandidate, setIceCandidate] = useState<{ candidate: string; from: string } | null>(null);
   const [peerLeft, setPeerLeft] = useState<string | null>(null);
+  const [peerVideoEnabled, setPeerVideoEnabled] = useState(true);
   const wsRef = useRef<WebSocket | null>(null);
 
   const handleMessage = useCallback((msg: ServerMessage) => {
@@ -56,6 +61,8 @@ export function useSignaling(): UseSignalingResult {
         // rejoins, only the (re)joining peer offers — avoiding SDP glare.
         setInitialPeers([]);
         setPeerLeft(msg.peerId);
+        // Reset assumed camera state so a fresh peer defaults to camera-on.
+        setPeerVideoEnabled(true);
         break;
       case "offer":
         setOffer({ sdp: msg.sdp, from: msg.from });
@@ -65,6 +72,9 @@ export function useSignaling(): UseSignalingResult {
         break;
       case "ice-candidate":
         setIceCandidate({ candidate: msg.candidate, from: msg.from });
+        break;
+      case "peer-video-state":
+        setPeerVideoEnabled(msg.enabled);
         break;
       case "error":
         const errorCode = msg.code as SignalingError;
@@ -108,6 +118,13 @@ export function useSignaling(): UseSignalingResult {
     [send]
   );
 
+  const sendVideoState = useCallback(
+    (enabled: boolean) => {
+      send({ type: "video-state", enabled });
+    },
+    [send]
+  );
+
   const leave = useCallback(() => {
     // Leave the room but keep the WebSocket open so the user can rejoin (or
     // join another room) without reconnecting. Reset all room-scoped state.
@@ -119,6 +136,7 @@ export function useSignaling(): UseSignalingResult {
     setAnswer(null);
     setIceCandidate(null);
     setPeerLeft(null);
+    setPeerVideoEnabled(true);
   }, [send]);
 
   const clearOffer = useCallback(() => {
@@ -207,10 +225,12 @@ export function useSignaling(): UseSignalingResult {
     answer,
     iceCandidate,
     peerLeft,
+    peerVideoEnabled,
     sendJoin,
     sendOffer,
     sendAnswer,
     sendIceCandidate,
+    sendVideoState,
     clearOffer,
     clearAnswer,
     clearIceCandidate,

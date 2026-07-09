@@ -11,6 +11,10 @@ interface UsePeerConnectionResult {
   pc: RTCPeerConnection | null;
   connectionState: RTCConnectionState;
   remoteStream: MediaStream | null;
+  // Whether the remote peer is currently sending a live video track. Driven by
+  // the `ontrack` event (MediaStream.addTrack fires no event, so watching the
+  // stream itself can't detect this — it must be caught where the track lands).
+  remoteHasVideo: boolean;
   createOffer: () => Promise<string>;
   createAnswer: () => Promise<string>;
   setRemoteDescription: (type: "offer" | "answer", sdp: string) => Promise<void>;
@@ -30,6 +34,7 @@ export function usePeerConnection(
   const [pc, setPc] = useState<RTCPeerConnection | null>(null);
   const [connectionState, setConnectionState] = useState<RTCConnectionState>("new");
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [remoteHasVideo, setRemoteHasVideo] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const handlersRef = useRef(handlers);
   const remoteStreamRef = useRef<MediaStream | null>(null);
@@ -72,6 +77,15 @@ export function usePeerConnection(
             handlersRef.current.onRemoteStream?.(newRemoteStream);
           } else {
             remoteStreamRef.current.addTrack(event.track);
+          }
+
+          if (event.track.kind === "video") {
+            setRemoteHasVideo(true);
+            event.track.addEventListener("ended", () => {
+              if (mounted) {
+                setRemoteHasVideo(false);
+              }
+            });
           }
         }
       };
@@ -136,6 +150,7 @@ export function usePeerConnection(
     remoteStreamRef.current?.getTracks().forEach((track) => track.stop());
     remoteStreamRef.current = null;
     setRemoteStream(null);
+    setRemoteHasVideo(false);
     setConnectionState("new");
     setResetKey((k) => k + 1);
   }, []);
@@ -157,6 +172,7 @@ export function usePeerConnection(
     pc,
     connectionState,
     remoteStream,
+    remoteHasVideo,
     createOffer,
     createAnswer,
     setRemoteDescription,
