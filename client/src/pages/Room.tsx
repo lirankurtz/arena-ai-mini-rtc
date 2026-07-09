@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useLocalMedia } from "../hooks/useLocalMedia";
+import { useRoomAvailability } from "../hooks/useRoomAvailability";
 import { useSignaling } from "../hooks/useSignaling";
 import { usePeerConnection } from "../hooks/usePeerConnection";
 import { Lobby } from "../components/Lobby";
@@ -10,6 +11,8 @@ import { ErrorBanner } from "../components/ErrorBanner";
 export default function Room() {
   const { id: roomId } = useParams<{ id: string }>();
   const [videoEnabled, setVideoEnabled] = useState(false);
+  const { available } = useRoomAvailability(roomId ?? "");
+  const roomFull = available === false;
   const { stream, error: mediaError, loading: mediaLoading } = useLocalMedia({
     audio: true,
     video: videoEnabled,
@@ -140,6 +143,7 @@ export default function Room() {
           error={null}
           videoEnabled={videoEnabled}
           onVideoToggle={setVideoEnabled}
+          roomFull={roomFull}
           onJoin={() => {
             setJoined(true);
           }}

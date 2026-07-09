@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { AudioIndicator } from "./AudioIndicator";
 import { ShareLink } from "./ShareLink";
 
@@ -11,6 +12,7 @@ interface LobbyProps {
   error?: string | null;
   videoEnabled?: boolean;
   onVideoToggle?: (enabled: boolean) => void;
+  roomFull?: boolean;
 }
 
 export function Lobby({
@@ -22,11 +24,29 @@ export function Lobby({
   error,
   videoEnabled = false,
   onVideoToggle,
+  roomFull = false,
 }: LobbyProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [probeLoading, setProbeLoading] = useState(true);
-  const [roomFull, setRoomFull] = useState(false);
-  const [probeError, setProbeError] = useState<string | null>(null);
+
+  // Show full-room screen instead of lobby
+  if (roomFull) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-slate-900 text-slate-100 p-4">
+        <div className="text-center flex flex-col items-center gap-3">
+          <h1 className="text-4xl font-bold mb-2">This call is full</h1>
+          <p className="text-slate-400 max-w-sm">
+            Someone is already in this room. A MiniRTC call only fits two people.
+          </p>
+        </div>
+        <Link
+          to="/"
+          className="px-8 py-3 rounded-lg font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+        >
+          Back to home
+        </Link>
+      </div>
+    );
+  }
 
   useEffect(() => {
     if (videoRef.current && stream && stream instanceof MediaStream && videoEnabled) {
@@ -34,67 +54,15 @@ export function Lobby({
     }
   }, [stream, videoEnabled]);
 
-  useEffect(() => {
-    let mounted = true;
-
-    const checkAvailability = async () => {
-      try {
-        const response = await fetch(`/api/rooms/${roomId}/available`);
-        if (!mounted) {
-          return;
-        }
-
-        if (!response.ok) {
-          setProbeError("Failed to check room availability");
-          return;
-        }
-
-        const data = await response.json();
-        setRoomFull(!data.available);
-        setProbeError(null);
-      } catch {
-        if (mounted) {
-          setProbeError("Network error checking availability");
-        }
-      } finally {
-        if (mounted) {
-          setProbeLoading(false);
-        }
-      }
-    };
-
-    checkAvailability();
-
-    return () => {
-      mounted = false;
-    };
-  }, [roomId]);
-
-  const isJoinDisabled = joinDisabled || roomFull || loading || probeLoading;
+  const isJoinDisabled = joinDisabled || loading;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-slate-900 text-slate-100 p-4">
       <div className="text-center flex flex-col items-center gap-3">
-        <h1 className="text-4xl font-bold mb-2">Ready to join?</h1>
+        <h1 className="text-4xl font-bold mb-2">Set up your call</h1>
         <p className="text-slate-400 text-sm">Share this link to invite someone:</p>
         <ShareLink roomId={roomId} />
       </div>
-
-      {probeLoading && (
-        <div className="text-slate-400">Checking room availability...</div>
-      )}
-
-      {roomFull && (
-        <div className="bg-red-900 text-red-100 px-6 py-3 rounded-lg">
-          Room is full. Unable to join.
-        </div>
-      )}
-
-      {probeError && (
-        <div className="bg-yellow-900 text-yellow-100 px-6 py-3 rounded-lg">
-          {probeError}
-        </div>
-      )}
 
       {error && (
         <div className="bg-red-900 text-red-100 px-6 py-3 rounded-lg">
