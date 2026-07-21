@@ -49,8 +49,8 @@ Open http://localhost:5173, create a room, share the link.
 2. Peer B opens URL → Lobby checks availability (room exists, has 1 peer, so available)
 3. Both enable media and click Join
 4. Server receives join → broadcasts "peer-joined" event
-5. Peer A (first joiner) creates WebRTC offer, sends via signaling
-6. Peer B receives offer → creates answer, sends back
+5. Peer B (second joiner) creates WebRTC offer, sends via signaling
+6. Peer A receives offer → creates answer, sends back
 7. Both exchange ICE candidates for NAT traversal (STUN only, no TURN)
 8. Connection established → video/audio flows
 9. Either peer clicks Leave → disconnect, room cleaned up after both leave
